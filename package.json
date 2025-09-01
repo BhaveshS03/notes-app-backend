@@ -1,0 +1,17 @@
+{
+  "name": "notes-back",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@y/websocket-server": "^0.1.1",
+    "ws": "^8.18.3",
+    "yjs": "^13.6.27"
+  }
+}
