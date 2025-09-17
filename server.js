@@ -7,10 +7,17 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import { Awareness } from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
+import express from 'express';
 
 const port = 1234;
 const server = http.createServer();
 const wss = new WebSocketServer({ server });
+const app = express();
+
+app.get('/api/active-rooms', (req, res) => {
+  const activeRooms = Array.from(docs.keys());
+  res.json({ rooms: activeRooms });
+});
 
 const PERSISTENCE_DIR = './persistence';
 
@@ -43,6 +50,7 @@ const getFilePaths = (roomId) => ({
   snapshot: `${PERSISTENCE_DIR}/${roomId}-snapshot.bin`,
   markdown: `${PERSISTENCE_DIR}/${roomId}-markdown.txt`
 });
+
 
 // Function to save document state
 const saveDocument = (doc, roomId) => {
@@ -287,6 +295,7 @@ process.on('SIGINT', () => {
   });
 });
 
+server.on('request', app);
 server.listen(port,'0.0.0.0', () => {
   console.log(`🚀 y-websocket server running at ws://localhost:${port}`);
   console.log(`📁 Persistence directory: ${PERSISTENCE_DIR}`);
