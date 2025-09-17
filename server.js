@@ -287,7 +287,7 @@ process.on('SIGINT', () => {
   });
 });
 
-server.listen(port, () => {
+server.listen(port,'0.0.0.0', () => {
   console.log(`🚀 y-websocket server running at ws://localhost:${port}`);
   console.log(`📁 Persistence directory: ${PERSISTENCE_DIR}`);
 });
