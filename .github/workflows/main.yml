@@ -1,0 +1,24 @@
+name: Deploy Notes Server to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/app
+            git pull origin main
+            bun install
+            pm2 restart my-bun-app || pm2 start "bun server.ts" --name my-bun-app
