@@ -8,12 +8,14 @@ import { Awareness } from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import express from 'express';
+// import cors from "cors";
 
 const port = 1234;
 const server = http.createServer();
 const wss = new WebSocketServer({ server });
 const app = express();
 app.use(express.json());
+// app.use(cors());
 
 const PERSISTENCE_DIR = './persistence';
 
@@ -30,8 +32,10 @@ if (!fs.existsSync(PERSISTENCE_DIR)) {
 
 // Clean room ID from URL
 const cleanRoomId = (url: string) => {
+  console.log('Raw room ID from URL:', url);  
   if (!url || url === '/') return 'default';
   let roomId = url.startsWith('/') ? url.slice(1) : url;
+
   if (roomId.startsWith('?room=')) roomId = roomId.replace('?room=', '');
   return roomId.replace(/[/\\:*?"<>|]/g, '_') || 'default';
 };
@@ -160,9 +164,17 @@ const send = (conn: any, encoder: any) => {
 
 wss.on('connection', (conn, req) => {
   const rawRoomId = req.url;
-  const roomId = cleanRoomId(rawRoomId || '');
   const ip = req.socket.remoteAddress;
+  
+  // Check if rawRoomId is invalid before processing
+  if (!rawRoomId) {
+    console.log(`❌ Invalid or empty room ID from ${ip}: ${rawRoomId}`);
+    return;
+  }
+  
+  const roomId = cleanRoomId(rawRoomId);
   console.log(`👤 Client connected from ${ip} to room ${roomId}`);
+
 
   const doc = getDoc(roomId);
   const awareness = getAwareness(roomId);
@@ -240,7 +252,7 @@ wss.on('connection', (conn, req) => {
     console.log(`👋 Client left room ${roomId}`);
     doc.off('update', updateHandler);
     awareness.off('update', awarenessHandler);
-    awarenessProtocol.removeAwarenessStates(awareness, [conn], null);
+    // awarenessProtocol.removeAwarenessStates(awareness, [conn], null);
     saveDocument(doc, roomId);
   });
 
@@ -251,13 +263,30 @@ wss.on('connection', (conn, req) => {
 
 // List active rooms
 app.get('/api/active-docs', (req, res) => {
-  res.json({ rooms: Array.from(docs.keys()) });
+  const rooms = Array.from(docs.entries()).map(([roomId, doc]) => {
+    const meta = doc.getMap('meta');
+
+    return {
+      roomId,
+      meta: {
+        title: meta.get('title') || 'Untitled',
+        owner: meta.get('owner') || null,
+        createdAt: meta.get('createdAt') || null,
+        lastModified: meta.get('lastModified') || null,
+        currentUser: meta.get('current_user') || null,
+        starred: meta.get('starred') || false,
+      }
+    };
+  });
+  console.log(`📋 Active rooms: ${rooms}`);
+  res.json({ rooms });
 });
 
 // Create new room / doc with owner & current_user
-app.post('/api/rooms', (req, res) => {
-  const { roomId: reqRoom, title, currentUser, owner } = req.body;
-  const roomId = cleanRoomId(reqRoom || `room-${Date.now()}`);
+app.post('/api/create-doc', (req, res) => {
+  const { title, currentUser, owner } = req.body;
+  
+  const roomId = cleanRoomId(`room-${Date.now()}`);
 
   const doc = getDoc(roomId);
   const meta = doc.getMap('meta');
@@ -273,6 +302,31 @@ app.post('/api/rooms', (req, res) => {
   if (currentUser) meta.set('current_user', currentUser);
   meta.set('lastModified', new Date().toISOString());
   meta.set('starred', false);
+
+  saveDocument(doc, roomId);
+
+  res.json({
+    ok: true,
+    roomId,
+    meta: getMetaObject(doc)
+  });
+});
+
+app.post('/api/update-doc', (req, res) => {
+  const { roomId, title, currentUser } = req.body;
+
+  const doc = getDoc(roomId);
+  const meta = doc.getMap('meta');
+
+  if (!doc || !meta) {
+    return res.status(404).json({ ok: false, error: 'Document not found' });
+  }
+
+  // update only allowed fields
+  if (title) meta.set('title', title);
+  if (currentUser) meta.set('lastModifiedBy', currentUser);
+
+  meta.set('lastModified', new Date().toISOString());
 
   saveDocument(doc, roomId);
 
