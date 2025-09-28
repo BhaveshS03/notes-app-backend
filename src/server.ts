@@ -8,14 +8,14 @@ import { Awareness } from 'y-protocols/awareness';
 import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import express from 'express';
-// import cors from "cors";
+import cors from "cors";
 
 const port = 1234;
 const server = http.createServer();
 const wss = new WebSocketServer({ server });
 const app = express();
 app.use(express.json());
-// app.use(cors());
+app.use(cors());
 
 const PERSISTENCE_DIR = './persistence';
 
