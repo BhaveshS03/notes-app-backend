@@ -564,7 +564,7 @@ app.get("/api/my-docs", async (req, res) => {
 server.on('request', app);
 server.listen(port, '0.0.0.0', () => {
 async function startServer() {
-  await mongoose.connect("mongodb+srv://bhaveshsonar19:3HcDp5tt01L78qQo@cluster0.6ijispb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+  await mongoose.connect("mongodb+srv://");
   console.log('Connected to MongoDB');
   console.log(`🚀 y-websocket server at ws://localhost:${port}`);
   console.log(`📁 Persistence dir: ${PERSISTENCE_DIR}`);
