@@ -386,10 +386,6 @@ app.put("/api/update-doc/:roomId", async (req, res) => {
       return res.status(404).json({ ok: false, error: "Document not found" });
     }
     
-    // Only owner or shared users can update
-    if (doc.owner.toString() !== existingUser._id.toString() && !doc.sharedWith.includes(existingUser._id)) {
-      return res.status(403).json({ ok: false, error: "Not authorized to update this document" });
-    }
     if (title) doc.title = title;
     if (typeof starred === 'boolean') doc.starred = starred;
     doc.lastModified = new Date();
@@ -414,46 +410,46 @@ app.put("/api/update-doc/:roomId", async (req, res) => {
   }
 });
 
-app.post("/api/share-doc", async (req, res) => {
-  const { docId, emailId } = req.body;
-  const authHeader = req.headers.authorization;
+  app.post("/api/share-doc", async (req, res) => {
+    const { docId, emailId } = req.body;
+    const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ ok: false, error: "Unauthorized" });
-  }
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
+    }
 
-  try {
-    const token = authHeader.split(" ")[1];
-    const decoded: any = jwt.verify(token, "your_jwt_secret");
-    const currentUser = await user.findById(decoded.id);
-    console.log("Share doc request:", { token, docId, emailId });
-    if (!currentUser) {
-      return res.status(404).json({ ok: false, error: "User not found" });
+    try {
+      const token = authHeader.split(" ")[1];
+      const decoded: any = jwt.verify(token, "your_jwt_secret");
+      const currentUser = await user.findById(decoded.id);
+      console.log("Share doc request:", { token, docId, emailId });
+      if (!currentUser) {
+        return res.status(404).json({ ok: false, error: "User not found" });
+      }
+      const doc = await Document.findById(docId);
+      if (!doc) {
+        return res.status(404).json({ ok: false, error: "Document not found" });
+      }
+      // Only the owner can share
+      // if (doc.owner.toString() !== currentUser._id.toString()) {
+      //   return res.status(403).json({ ok: false, error: "Not authorized to share this document" });
+      // }
+      const userToShare = await user.find({ email: emailId });
+      console.log("User to share with:", userToShare);
+      if (userToShare.length === 0) {
+        return res.status(404).json({ ok: false, error: "User to share with not found" });
+      }
+      const userId = userToShare[0]._id;
+      if (!doc.sharedWith.includes(userId)) {
+        doc.sharedWith.push(userId);
+        await doc.save();
+      }
+      res.json({ ok: true, sharedWith: doc.sharedWith });
+    } catch (err) {
+      console.error("Error sharing document:", err);
+      res.status(500).json({ ok: false, error: "Internal server error" });
     }
-    const doc = await Document.findById(docId);
-    if (!doc) {
-      return res.status(404).json({ ok: false, error: "Document not found" });
-    }
-    // Only the owner can share
-    if (doc.owner.toString() !== currentUser._id.toString()) {
-      return res.status(403).json({ ok: false, error: "Not authorized to share this document" });
-    }
-    const userToShare = await user.find({ email: emailId });
-    console.log("User to share with:", userToShare);
-    if (userToShare.length === 0) {
-      return res.status(404).json({ ok: false, error: "User to share with not found" });
-    }
-    const userId = userToShare[0]._id;
-    if (!doc.sharedWith.includes(userId)) {
-      doc.sharedWith.push(userId);
-      await doc.save();
-    }
-    res.json({ ok: true, sharedWith: doc.sharedWith });
-  } catch (err) {
-    console.error("Error sharing document:", err);
-    res.status(500).json({ ok: false, error: "Internal server error" });
-  }
-});
+  });
 
 
 app.post("/api/register",async (req,res)=>{
