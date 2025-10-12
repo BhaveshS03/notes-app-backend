@@ -8,12 +8,38 @@ import { PORT, PERSISTENCE_DIR } from './config/constants';
 import routes from './routes';
 import { handleWebSocketConnection } from './websocket/yjs.handler';
 import { yjsService } from './services/yjs.service';
+import googleConfig from "./config/google.config";
+import passport from "passport";
+import session from "express-session";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 // Initialize Express app
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(routes);
+
+app.use(session({ secret: process.env.EXPRESS_SECRET || "", resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Setup Google OAuth
+passport.use(
+  new GoogleStrategy(
+    googleConfig,
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        console.log(accessToken, profile);
+        done(null, profile);
+      } catch (err) {
+        done(err, false);
+      }
+    }
+  )
+);
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, false));
 
 // Create HTTP server
 const server = http.createServer(app);
