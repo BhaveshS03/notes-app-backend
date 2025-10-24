@@ -16,8 +16,16 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 // Initialize Express app
 const app = express();
+app.use(
+  cors({
+    origin: [
+      "https://gentle-elf-19ba24.netlify.app",
+      "https://main.d220red9g3z692.amplifyapp.com",
+    ],
+    credentials: true,
+  }),
+);
 app.use(express.json());
-app.use(cors());
 app.use(routes);
 
 app.use(
