@@ -21,12 +21,12 @@ app.use(
     origin: [
       "https://gentle-elf-19ba24.netlify.app",
       "https://main.d220red9g3z692.amplifyapp.com",
+      "http://localhost:8080"
     ],
     credentials: true,
   }),
 );
 app.use(express.json());
-app.use(routes);
 
 app.use(
   session({
@@ -37,6 +37,8 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(routes);
 
 passport.use(
   new GoogleStrategy(
