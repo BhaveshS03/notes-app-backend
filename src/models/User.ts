@@ -19,9 +19,10 @@ const userSchema = new Schema<IUser>({
   documents: [{ type: String }],
   googleId: {
     type: String,
+    index: true, 
     sparse: true,
   },
 });
 
-userSchema.index({ googleId: 1 }, { sparse: true });
+// userSchema.index({ googleId: 1 }, { sparse: true });
 export const User = mongoose.model<IUser>("User", userSchema);
