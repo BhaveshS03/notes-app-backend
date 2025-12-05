@@ -42,6 +42,14 @@ export class YjsService {
     return this.docs;
   }
 
+  getDocText(roomId: string): string{
+    const doc = this.docs.get(roomId);
+    if(!doc) return "No data";
+    const xml = doc.getXmlFragment("prosemirror").toString();
+    const plain = xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return plain;
+  }
+
   saveAll(): void {
     console.log(`🔄 Saving all docs: ${this.docs.size} total`);
     for (const [roomId, doc] of this.docs.entries()) {

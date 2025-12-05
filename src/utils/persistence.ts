@@ -2,6 +2,7 @@ import fs from 'fs';
 import * as Y from 'yjs';
 import { getFilePaths } from './helpers';
 import { PERSISTENCE_DIR } from '../config/constants';
+import { xmlToMarkdown } from './xmlToMarkdown';
 
 export const getMetaObject = (doc: Y.Doc): Record<string, any> => {
   const metaMap = doc.getMap('meta');
@@ -21,8 +22,8 @@ export const saveDocument = (doc: Y.Doc, roomId: string): boolean => {
     // Extract text
     const tempDoc = new Y.Doc();
     Y.applyUpdate(tempDoc, snapshotData);
-    const ytext = tempDoc.getText('content');
-    fs.writeFileSync(markdown, ytext.toString(), 'utf8');
+    const xml = doc.getXmlFragment("prosemirror").toString();
+    fs.writeFileSync(markdown, xmlToMarkdown(xml), 'utf8');
 
     // Save meta
     const metaObj = getMetaObject(doc);

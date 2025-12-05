@@ -1,9 +1,11 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { Document } from "../models/Document";
 import { User } from "../models/User";
 import { AuthRequest } from "../middleware/auth";
 import { yjsService } from "../services/yjs.service";
 import { deleteDocumentFiles } from "../utils/persistence";
+import { GoogleGenAI } from "@google/genai";
+
 
 export const createDocument = async (req: AuthRequest, res: Response) => {
   try {
@@ -213,4 +215,33 @@ export const getActiveDocs = (req: AuthRequest, res: Response) => {
   );
 
   res.json({ rooms });
+};
+
+
+export const summarizeController = async (req: Request, res: Response) => {
+  try {
+    const { docId } = req.params;
+    const text = yjsService.getDocText(docId);
+    console.log("summary call", docId);
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ message: "Document is empty" });
+    }
+
+    const ai = new GoogleGenAI({});
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Summarize the following document into clear short bullet points:${text}`,
+    });
+
+
+    const summary = response.text;
+
+    return res.json({
+      docId,
+      summary,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Summary failed", details: err });
+  }
 };

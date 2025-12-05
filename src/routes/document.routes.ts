@@ -10,5 +10,6 @@ router.post('/share-doc', authenticate, documentController.shareDocument);
 router.post('/delete-doc', authenticate, documentController.deleteDocument);
 router.get('/my-docs', authenticate, documentController.getMyDocuments);
 router.get('/active-docs', authenticate, documentController.getActiveDocs);
+router.get("/summarize-doc/:docId", authenticate, documentController.summarizeController);
 
 export default router;
