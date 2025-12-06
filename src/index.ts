@@ -19,7 +19,6 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://gentle-elf-19ba24.netlify.app",
       "https://main.d220red9g3z692.amplifyapp.com",
       "http://localhost:8080"
     ],
